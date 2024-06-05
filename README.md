@@ -20,7 +20,7 @@ tensorboard>=2.7.0
 
 ### Features
 
-- **Contextual Boundary-Aware Mechanism:** CBSA leverages contextual information and boundary awareness to enhance the segmentation accuracy of metallographic images.
+- **Convolution Based Self-Attention:** The computation of self-attention mechanism is simulated by means of convolution
 - **Flexible Backbone Choices:** The model based on U-Net structure,  supports multiple backbone architectures, including VGG16 and ResNet50.
 - **Mixed Precision Training:** Supports FP16 mixed precision training to reduce memory usage and speed up the training process.
 - **Customizable Loss Functions:** Integrates various loss functions, including Dice Loss and Focal Loss, to tackle class imbalance and improve segmentation performance.
