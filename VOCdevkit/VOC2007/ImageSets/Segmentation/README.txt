@@ -1,0 +1,1 @@
+This folder stores the txt files that divide the dataset
