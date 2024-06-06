@@ -1,6 +1,7 @@
 import csv
 import os
 from os.path import join
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -16,7 +17,6 @@ def f_score(inputs, target, beta=1, smooth=1e-5, threhold=0.5):
 
     temp_inputs = torch.softmax(inputs.transpose(1, 2).transpose(2, 3).contiguous().view(n, -1, c), -1)
     temp_target = target.view(n, -1, ct)
-
     temp_inputs = torch.gt(temp_inputs, threhold).float()
     tp = torch.sum(temp_target[..., :-1] * temp_inputs, axis=[0, 1])
     fp = torch.sum(temp_inputs, axis=[0, 1]) - tp
@@ -60,14 +60,19 @@ def compute_mIoU(gt_dir, pred_dir, png_name_list, num_classes, name_classes=None
         label = np.array(Image.open(gt_imgs[ind]))
 
         if len(label.flatten()) != len(pred.flatten()):
-            print(
-                f'Skipping: len(gt) = {len(label.flatten())}, len(pred) = {len(pred.flatten())}, {gt_imgs[ind]}, {pred_imgs[ind]}')
+            print('Skipping: len(gt) = {:d}, len(pred) = {:d}, {:s}, {:s}'.format(
+                len(label.flatten()), len(pred.flatten()), gt_imgs[ind], pred_imgs[ind]))
             continue
 
         hist += fast_hist(label.flatten(), pred.flatten(), num_classes)
         if name_classes is not None and ind > 0 and ind % 10 == 0:
-            print(
-                f'{ind} / {len(gt_imgs)}: mIou-{100 * np.nanmean(per_class_iu(hist)):.2f}%; mPA-{100 * np.nanmean(per_class_PA_Recall(hist)):.2f}%; Accuracy-{100 * per_Accuracy(hist):.2f}%')
+            print('{:d} / {:d}: mIou-{:0.2f}%; mPA-{:0.2f}%; Accuracy-{:0.2f}%'.format(
+                ind,
+                len(gt_imgs),
+                100 * np.nanmean(per_class_iu(hist)[0:]),
+                100 * np.nanmean(per_class_PA_Recall(hist)[0:]),
+                100 * per_Accuracy(hist)
+            ))
 
     IoUs = per_class_iu(hist)
     PA_Recall = per_class_PA_Recall(hist)
@@ -75,11 +80,12 @@ def compute_mIoU(gt_dir, pred_dir, png_name_list, num_classes, name_classes=None
 
     if name_classes is not None:
         for ind_class in range(num_classes):
-            print(
-                f'===>{name_classes[ind_class]}:\tIou-{round(IoUs[ind_class] * 100, 2)}; Recall (equal to the PA)-{round(PA_Recall[ind_class] * 100, 2)}; Precision-{round(Precision[ind_class] * 100, 2)}')
+            print('===>' + name_classes[ind_class] + ':\tIou-' + str(round(IoUs[ind_class] * 100, 2)) \
+                  + '; Recall (equal to the PA)-' + str(round(PA_Recall[ind_class] * 100, 2)) + '; Precision-' + str(
+                round(Precision[ind_class] * 100, 2)))
 
-    print(
-        f'===> mIoU: {round(np.nanmean(IoUs) * 100, 2)}; mPA: {round(np.nanmean(PA_Recall) * 100, 2)}; Accuracy: {round(per_Accuracy(hist) * 100, 2)}')
+    print('===> mIoU: ' + str(round(np.nanmean(IoUs[1:]) * 100, 2)) + '; mPA: ' + str(
+        round(np.nanmean(PA_Recall[1:]) * 100, 2)) + '; Accuracy: ' + str(round(per_Accuracy(hist) * 100, 2)))
     return np.array(hist, np.int), IoUs, PA_Recall, Precision
 
 
@@ -102,9 +108,11 @@ def draw_plot_func(values, name_classes, plot_title, x_label, output_path, tick_
     plt.yticks(range(len(values)), name_classes, fontsize=tick_font_size)
     r = fig.canvas.get_renderer()
     for i, val in enumerate(values):
-        str_val = f" {val:.2f}" if val < 1.0 else f" {val}"
+        str_val = " " + str(val)
+        if val < 1.0:
+            str_val = " {0:.2f}".format(val)
         t = plt.text(val, i, str_val, color='royalblue', va='center', fontweight='bold')
-        if i == len(values) - 1:
+        if i == (len(values) - 1):
             adjust_axes(r, t, fig, axes)
 
     fig.tight_layout()
@@ -115,26 +123,27 @@ def draw_plot_func(values, name_classes, plot_title, x_label, output_path, tick_
 
 
 def show_results(miou_out_path, hist, IoUs, PA_Recall, Precision, name_classes, tick_font_size=12):
-    draw_plot_func(IoUs, name_classes, f"mIoU = {np.nanmean(IoUs) * 100:.2f}%", "Intersection over Union",
+    draw_plot_func(IoUs, name_classes, "mIoU = {0:.2f}%".format(np.nanmean(IoUs) * 100), "Intersection over Union", \
                    os.path.join(miou_out_path, "mIoU.png"), tick_font_size=tick_font_size, plt_show=True)
-    print(f"Save mIoU out to {os.path.join(miou_out_path, 'mIoU.png')}")
+    print("Save mIoU out to " + os.path.join(miou_out_path, "mIoU.png"))
 
-    draw_plot_func(PA_Recall, name_classes, f"mPA = {np.nanmean(PA_Recall) * 100:.2f}%", "Pixel Accuracy",
+    draw_plot_func(PA_Recall, name_classes, "mPA = {0:.2f}%".format(np.nanmean(PA_Recall) * 100), "Pixel Accuracy", \
                    os.path.join(miou_out_path, "mPA.png"), tick_font_size=tick_font_size, plt_show=False)
-    print(f"Save mPA out to {os.path.join(miou_out_path, 'mPA.png')}")
+    print("Save mPA out to " + os.path.join(miou_out_path, "mPA.png"))
 
-    draw_plot_func(PA_Recall, name_classes, f"mRecall = {np.nanmean(PA_Recall) * 100:.2f}%", "Recall",
+    draw_plot_func(PA_Recall, name_classes, "mRecall = {0:.2f}%".format(np.nanmean(PA_Recall) * 100), "Recall", \
                    os.path.join(miou_out_path, "Recall.png"), tick_font_size=tick_font_size, plt_show=False)
-    print(f"Save Recall out to {os.path.join(miou_out_path, 'Recall.png')}")
+    print("Save Recall out to " + os.path.join(miou_out_path, "Recall.png"))
 
-    draw_plot_func(Precision, name_classes, f"mPrecision = {np.nanmean(Precision) * 100:.2f}%", "Precision",
+    draw_plot_func(Precision, name_classes, "mPrecision = {0:.2f}%".format(np.nanmean(Precision) * 100), "Precision", \
                    os.path.join(miou_out_path, "Precision.png"), tick_font_size=tick_font_size, plt_show=False)
-    print(f"Save Precision out to {os.path.join(miou_out_path, 'Precision.png')}")
+    print("Save Precision out to " + os.path.join(miou_out_path, "Precision.png"))
 
     with open(os.path.join(miou_out_path, "confusion_matrix.csv"), 'w', newline='') as f:
         writer = csv.writer(f)
-        writer_list = [[' '] + [str(c) for c in name_classes]]
+        writer_list = []
+        writer_list.append([' '] + [str(c) for c in name_classes])
         for i in range(len(hist)):
             writer_list.append([name_classes[i]] + [str(x) for x in hist[i]])
         writer.writerows(writer_list)
-    print(f"Save confusion_matrix out to {os.path.join(miou_out_path, 'confusion_matrix.csv')}")
+    print("Save confusion_matrix out to " + os.path.join(miou_out_path, "confusion_matrix.csv"))

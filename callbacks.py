@@ -97,8 +97,10 @@ class EvalCallback:
                 f.write("0\n")
 
     def get_miou_png(self, image):
+
         image = cvtColor(image)
-        original_h, original_w = np.array(image).shape[:2]
+        orininal_h = np.array(image).shape[0]
+        orininal_w = np.array(image).shape[1]
         image_data, nw, nh = resize_image(image, (self.input_shape[1], self.input_shape[0]))
         image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, np.float32)), (2, 0, 1)), 0)
 
@@ -106,13 +108,16 @@ class EvalCallback:
             images = torch.from_numpy(image_data)
             if self.cuda:
                 images = images.cuda()
+
             pr = self.net(images)[0]
             pr = F.softmax(pr.permute(1, 2, 0), dim=-1).cpu().numpy()
-            pr = pr[int((self.input_shape[0] - nh) // 2): int((self.input_shape[0] - nh) // 2 + nh),
+            pr = pr[int((self.input_shape[0] - nh) // 2): int((self.input_shape[0] - nh) // 2 + nh), \
                  int((self.input_shape[1] - nw) // 2): int((self.input_shape[1] - nw) // 2 + nw)]
-            pr = cv2.resize(pr, (original_w, original_h), interpolation=cv2.INTER_LINEAR)
+            pr = cv2.resize(pr, (orininal_w, orininal_h), interpolation=cv2.INTER_LINEAR)
             pr = pr.argmax(axis=-1)
-        return Image.fromarray(np.uint8(pr))
+
+        image = Image.fromarray(np.uint8(pr))
+        return image
 
     def on_epoch_end(self, epoch, model_eval):
         if epoch % self.period == 0 and self.eval_flag:
