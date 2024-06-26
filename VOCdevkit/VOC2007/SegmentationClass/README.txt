@@ -1,1 +1,0 @@
-This folder stores the dataset labels in PNG format

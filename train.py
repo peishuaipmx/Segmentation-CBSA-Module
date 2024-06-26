@@ -24,8 +24,8 @@ def parse_args():
     parser.add_argument('--sync_bn', action='store_true', default=False, help='Use sync batch normalization')
     parser.add_argument('--fp16', action='store_true', default=False, help='Use mixed precision training')
     parser.add_argument('--num_classes', type=int, default=2, help='Number of classes')
-    parser.add_argument('--num_workers', type=int, default=2, help='Number of data loading workers')
-    parser.add_argument('--backbone', type=str, default='vgg', help='Backbone model: vgg or resnet50')
+    parser.add_argument('--num_workers', type=int, default=4, help='Number of data loading workers')
+    parser.add_argument('--backbone', type=str, default='resnet50', help='Backbone model: vgg or resnet50')
     parser.add_argument('--pretrained', action='store_true', default=False, help='Use pretrained weights')
     parser.add_argument('--model_path', type=str, default='', help='Path to pretrained model')
     parser.add_argument('--input_shape', type=int, nargs='+', default=[256, 256], help='Input shape')
@@ -41,8 +41,8 @@ def parse_args():
     parser.add_argument('--momentum', type=float, default=0.85, help='Momentum')
     parser.add_argument('--weight_decay', type=float, default=0, help='Weight decay')
     parser.add_argument('--lr_decay_type', type=str, default='cos', help='Learning rate decay type')
-    parser.add_argument('--save_period', type=int, default=150, help='Save period')
-    parser.add_argument('--save_dir', type=str, default='logs/unet-test1', help='Directory to save logs and models')
+    parser.add_argument('--save_period', type=int, default=300, help='Save period')
+    parser.add_argument('--save_dir', type=str, default='logs/unet-res', help='Directory to save logs and models')
     parser.add_argument('--eval_flag', action='store_true', default=True, help='Evaluate during training')
     parser.add_argument('--eval_period', type=int, default=1, help='Evaluation period')
     parser.add_argument('--vocdevkit_path', type=str, default='VOCdevkit', help='Path to VOCdevkit dataset')
@@ -80,7 +80,8 @@ if __name__ == "__main__":
         else:
             download_weights(args.backbone)
 
-    model = Unet_Attn(num_classes=args.num_classes, pretrained=args.pretrained, backbone=args.backbone).train()
+    # model = Unet_Attn(num_classes=args.num_classes, pretrained=args.pretrained, backbone=args.backbone).train()
+    model = Unet(num_classes=args.num_classes, pretrained=args.pretrained, backbone=args.backbone).train()
     if not args.pretrained:
         weights_init(model)
     if args.model_path != '':

@@ -1,1 +1,0 @@
-This folder stores the dataset images in JPG format
