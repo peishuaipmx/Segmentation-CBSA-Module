@@ -4,7 +4,7 @@ from functools import partial
 import math
 from torch.hub import load_state_dict_from_url
 import torch.nn.functional as F
-from Conv_Based_Self_Attn import Attention
+from Conv_Based_Self_Attn import CBSA
 
 
 # VGG Model
@@ -323,14 +323,14 @@ class Unet(nn.Module):
                 param.requires_grad = True
 
 
-class unetUp_Attn(nn.Module):
+class unetUp_CBSA(nn.Module):
     def __init__(self, in_size, out_size):
-        super(unetUp_Attn, self).__init__()
+        super(unetUp_CBSA, self).__init__()
         self.conv1 = nn.Conv2d(in_size, out_size, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(out_size, out_size, kernel_size=3, padding=1)
         self.up = nn.UpsamplingBilinear2d(scale_factor=2)
         self.relu = nn.ReLU(inplace=True)
-        self.attention = Attention(out_size, out_size)
+        self.attention = CBSA(out_size, out_size)
 
     def forward(self, inputs1, inputs2):
         outputs = torch.cat([inputs1, self.up(inputs2)], 1)
@@ -342,9 +342,9 @@ class unetUp_Attn(nn.Module):
         return outputs
 
 
-class Unet_Attn(nn.Module):
+class Unet_CBSA(nn.Module):
     def __init__(self, num_classes=21, pretrained=False, backbone='vgg'):
-        super(Unet_Attn, self).__init__()
+        super(Unet_CBSA, self).__init__()
         if backbone == 'vgg':
             self.vgg = VGG16(pretrained=pretrained)
             in_filters = [192, 384, 768, 1024]
@@ -356,7 +356,7 @@ class Unet_Attn(nn.Module):
         out_filters = [64, 128, 256, 512]
 
         self.up_concat4 = unetUp(in_filters[3], out_filters[3])
-        self.up_concat3 = unetUp_Attn(in_filters[2], out_filters[2])
+        self.up_concat3 = unetUp_CBSA(in_filters[2], out_filters[2])
         self.up_concat2 = unetUp(in_filters[1], out_filters[1])
         self.up_concat1 = unetUp(in_filters[0], out_filters[0])
 
@@ -406,3 +406,4 @@ class Unet_Attn(nn.Module):
         elif self.backbone == "resnet50":
             for param in self.resnet.parameters():
                 param.requires_grad = True
+

@@ -40,14 +40,14 @@ class Hidden_conv_block(nn.Module):
         a = self.layer(x)
         return a
 
-class Attention(nn.Module):
+class CBSA(nn.Module):
     def __init__(self,
                  in_channel,
                  out_channel,
                  patch_size=2,
                  attn_drop_ratio=0.25,
                  ):
-        super(Attention, self).__init__()
+        super(CBSA, self).__init__()
         self.in_channel = in_channel
         self.out_channel = out_channel
         self.patchEmbedding = PatchEmbed(patch_size)
