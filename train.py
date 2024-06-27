@@ -11,7 +11,7 @@ import torch.distributed as dist
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-from module import Unet, Unet_CBSA
+from module import Unet, Unet_Attn
 from callbacks import EvalCallback, LossHistory
 from datasets import UnetDataset, unet_dataset_collate
 from utils import download_weights, seed_everything, show_config, worker_init_fn
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         else:
             download_weights(args.backbone)
 
-    # model = Unet_CBSA(num_classes=args.num_classes, pretrained=args.pretrained, backbone=args.backbone).train()
+    # model = Unet_Attn(num_classes=args.num_classes, pretrained=args.pretrained, backbone=args.backbone).train()
     model = Unet(num_classes=args.num_classes, pretrained=args.pretrained, backbone=args.backbone).train()
     if not args.pretrained:
         weights_init(model)
